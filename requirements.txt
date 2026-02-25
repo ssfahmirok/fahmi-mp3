@@ -4,3 +4,4 @@ requests==2.31.0
 yt-dlp==2026.02.21
 gunicorn==21.2.0
 y2mate-api==1.2.2
+curl-cffi==0.7.2
