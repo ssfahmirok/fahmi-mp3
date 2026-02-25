@@ -981,11 +981,21 @@
             btn.innerHTML = '<div class="spinner"></div><span>Loading...</span>';
 
             try {
-                const response = await fetch(`/api/download?id=${videoId}`);
-                const data = await response.json();
+                // Try primary method first
+                let response = await fetch(`/api/download?id=${videoId}`);
+                let data = await response.json();
+
+                // If primary method fails with bot error, try alternative method
+                if (data.error && (data.error.includes('bot') || data.error.includes('Sign in'))) {
+                    console.log('Primary method failed, trying alternative...');
+                    btn.innerHTML = '<div class="spinner"></div><span>Mencoba metode alternatif...</span>';
+                    
+                    response = await fetch(`/api/download-alt?id=${videoId}`);
+                    data = await response.json();
+                }
 
                 if (data.error) {
-                    alert('Error: ' + data.error);
+                    showDownloadError(videoId, data);
                     return;
                 }
 
@@ -1032,6 +1042,29 @@
                     <span>Download File</span>
                 </button>
                 <button class="close-btn" onclick="this.parentElement.remove(); activeDownload = null;">Tutup</button>
+            `;
+            card.appendChild(modal);
+        }
+
+        function showDownloadError(videoId, data) {
+            const card = document.querySelector(`[data-id="${videoId}"]`);
+            const existingModal = card.querySelector('.audio-modal');
+            if (existingModal) existingModal.remove();
+
+            const modal = document.createElement('div');
+            modal.className = 'audio-modal';
+            modal.style.borderColor = 'rgba(255, 0, 0, 0.3)';
+            modal.innerHTML = `
+                <div style="text-align: center; padding: 1rem;">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="#ff6666" stroke-width="2" width="48" height="48" style="margin-bottom: 0.5rem;">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="12" y1="8" x2="12" y2="12"></line>
+                        <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                    </svg>
+                    <p style="color: #ff6666; margin-bottom: 0.5rem;">${data.error}</p>
+                    ${data.solution ? `<p style="color: #888; font-size: 0.875rem;">${data.solution}</p>` : ''}
+                    <button class="close-btn" onclick="this.parentElement.parentElement.remove();" style="margin-top: 1rem;">Tutup</button>
+                </div>
             `;
             card.appendChild(modal);
         }
